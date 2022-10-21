@@ -10,8 +10,33 @@ var base ={
         path:path.resolve(__dirname,'dist'),
         clean:true
     },
+    module:{
+        rules:[{
+            test:/\.m?js$|\.jsx?$/,
+            exclude:/node_modules/,
+            use:{
+                loader:'babel-loader',
+                options:{
+                    presets:["@babel/preset-env",["@babel/preset-react",{
+                        "development":true
+                    }]],
+                    plugins: ['@babel/plugin-transform-runtime']
+                }
+            }
+        },{
+            test:/\.ejs$/,
+            loader:'ejs-compiled-loader',
+            options: {
+                htmlmin: true,
+                htmlminOptions: {
+                    removeComments: true
+                }
+            }
+        }]
+    },
     plugins:[new HtmlWebpackPlugin({
-        title:'demo'
+        title:'demo',
+        template:path.resolve(__dirname,'template/index.ejs')
     })],
 }
 function env(){
