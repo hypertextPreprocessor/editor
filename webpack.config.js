@@ -3,12 +3,39 @@ const { merge } = require('webpack-merge');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 var base ={
     entry:{
+        //highlight:'./src/highlight.js',
         app:'./src/index.js'
     },
     output:{
         filename:'[name].[contenthash].js',
         path:path.resolve(__dirname,'dist'),
+        library:{
+            name:'myEditor',
+            type:'umd',
+            umdNamedDefine:true,
+        },
+        globalObject:'this',
         clean:true
+    },
+    performance:{
+        maxEntrypointSize: 512000,
+        maxAssetSize: 512000,
+        hints: false,
+    },
+  
+    optimization:{
+        runtimeChunk: true,
+        splitChunks:{
+            chunks: 'all',
+            minSize:512000,
+        }
+    },
+    resolve: {
+        alias: {
+            'parchment': path.resolve(__dirname, 'node_modules/parchment/src/parchment.ts'),
+            'quill$': path.resolve(__dirname, 'node_modules/quill/quill.js'),
+        },
+        extensions: ['.js', '.ts', '.svg']
     },
     module:{
         rules:[{
@@ -32,6 +59,35 @@ var base ={
                     removeComments: true
                 }
             }
+        },{
+            test:/\.ts$/,
+            use:[{
+                loader:'ts-loader',
+                options:{
+                    compilerOptions: {
+                        declaration: false,
+                        target: 'es5',
+                        module: 'commonjs'
+                    },
+                    transpileOnly: true
+                }
+            }]
+        },{
+            test: /\.(png|jpe?g|gif|svg|eot|ttf|woff|woff2)$/i,
+            type:"asset/source"
+        },{
+            test:/\.css$/i,
+            use:[
+                {loader:'style-loader'},
+                {
+                    loader:'css-loader',
+                    options:{
+                        modules:{
+                            mode:"global"
+                        }
+                    }
+                }
+            ]
         }]
     },
     plugins:[new HtmlWebpackPlugin({
@@ -59,7 +115,10 @@ function env(){
         }
     }else{
         return {
-            mode:"production"
+            mode:"production",
+            optimization: {
+                runtimeChunk: true,
+            },
         }
     }   
 }
