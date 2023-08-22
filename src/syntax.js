@@ -1,5 +1,3 @@
-import hljs from 'highlight.js';
-//import hljs from 'highlight.js/lib/core';
 import Delta from 'quill-delta';
 import { ClassAttributor, Scope } from 'parchment';
 import Inline from '../blots/inline';
@@ -11,6 +9,7 @@ import CursorBlot from '../blots/cursor';
 import TextBlot, { escapeText } from '../blots/text';
 import CodeBlock, { CodeBlockContainer } from '../formats/code';
 import { traverse } from './clipboard';
+
 const TokenAttributor = new ClassAttributor('code-token', 'hljs', {
   scope: Scope.INLINE,
 });
@@ -164,12 +163,9 @@ class Syntax extends Module {
   constructor(quill, options) {
     super(quill, options);
     if (this.options.hljs == null) {
-      this.options.hljs = hljs;
-      /*
       throw new Error(
         'Syntax module requires highlight.js. Please include the library on the page before Quill.',
       );
-      */
     }
     this.languages = this.options.languages.reduce((memo, { key }) => {
       memo[key] = true;
@@ -246,7 +242,7 @@ class Syntax extends Module {
     }
     const container = this.quill.root.ownerDocument.createElement('div');
     container.classList.add(CodeBlock.className);
-    container.innerHTML = this.options.hljs.highlight(text,{language,ignoreIllegals:true}).value;
+    container.innerHTML = this.options.hljs().highlight(text,{language}).value;
     return traverse(
       this.quill.scroll,
       container,
@@ -276,13 +272,9 @@ class Syntax extends Module {
   }
 }
 Syntax.DEFAULTS = {
-  hljs:null
-  /*
-  (()=>{
+  hljs: (() => {
     return window.hljs;
-  })()
-  */
-  ,
+  })(),
   interval: 1000,
   languages: [
     { key: 'plain', label: 'Plain' },
@@ -299,11 +291,7 @@ Syntax.DEFAULTS = {
     { key: 'python', label: 'Python' },
     { key: 'ruby', label: 'Ruby' },
     { key: 'sql', label: 'SQL' },
-    {key:'dart',label:'Dart'},
-    {key:'go',label:'GO'},
-    {key:'swift',label:'Swift'},
-    {key:'ruby',label:'Ruby'},
-    {key:'python',label:'Python'}
+    
   ],
 };
 
