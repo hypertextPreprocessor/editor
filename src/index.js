@@ -9,10 +9,28 @@ import "quill/dist/quill.snow.css";
 import "highlight.js/styles/github.css";
 import "quill-better-table/dist/quill-better-table.css";
 import "./custom.css"
+
+
+const style1 = {
+  display:'flex',
+  flexFlow:'row nowrap',
+  alignItems:'center',
+  justifyContent: 'space-around',
+  height:'60px'
+}
+const btnStyle={
+    appearance:"none",
+    background: "ffffff",
+    padding:"6px 13px",
+    border: "none",
+    boxShadow: "2px 1px 2px #c7c7c7",
+    width:"120px"
+}
 class RootElement extends React.Component{
     constructor(props) {
         super(props);
         this.state = {
+          withContainer:"true",
           quill:null,
           tableRowNum:3,
           tableColumnNum:3,
@@ -21,6 +39,7 @@ class RootElement extends React.Component{
         };
         this.editor = React.createRef();
         this.toolbar = React.createRef();
+        this.textarea = React.createRef();
     }
     initEditor(){
       hljs.highlightAll();
@@ -135,6 +154,13 @@ class RootElement extends React.Component{
       var output = copyContent.outerHTML.replaceAll(/<br>/ig,'<br/>').replaceAll('&nbsp;','&#160;');
       return output;
     }
+    originHTMLFormat(){
+      //return this.state.quill.getSemanticHTML();
+      return this.editor.current.innerHTML;
+    }
+    originHTMLFormatWithContainer(){
+      return this.state.quill;
+    }
     componentDidMount() {
         this.initEditor();
         window.addEventListener('scroll',()=>{
@@ -241,13 +267,67 @@ class RootElement extends React.Component{
     </span>
 </div>
             <div id="editor" ref={this.editor} style={{minHeight:700}}></div>
-            <button id="getHtmlForXhtml" onClick={()=>{
-             var output = this.handleHTMLFormat();
-              this.setState({html:output});
-            }}>获取HTML</button>
-            <button onClick={()=>{
-              var output = this.handleHTMLFormat();
-               navigator.clipboard.writeText(output).then(function() {
+            <div style={style1}>
+            <button style={btnStyle} id="getHtmlForXhtml" onClick={()=>{
+              //var output = this.handleHTMLFormat();
+              //this.setState({html:output});
+              var fragment = document.createDocumentFragment();
+                var tempElement = document.createElement('div');
+                tempElement.innerHTML = this.textarea.current.value;
+                while (tempElement.firstChild) {
+                    fragment.appendChild(tempElement.firstChild);
+                }
+                //this.editor.current.innerHTML = fragment.querySelector("#editor ").innerHTML;
+                this.editor.current.querySelector(".ql-editor").innerHTML =  fragment.querySelector("#editor .ql-editor").innerHTML;
+            }}>渲染...个</button>
+            <div>
+              <input type="radio" id="withContainer" name="set" value={true} defaultChecked onChange={(e)=>{
+                this.setState({withContainer:e.target.value});
+              }}/>
+              <label htmlFor="withContainer">带壳</label>
+              <input type="radio" id="withoutContainer" name="set" value={false} onChange={(e)=>{
+                this.setState({withContainer:e.target.value});
+              }}/>
+              <label htmlFor="withoutContainer">不带壳</label>
+            </div>
+            <button style={btnStyle} onClick={()=>{
+              var output = '';
+              if(this.state.withContainer === "true"){
+                /*
+                var editor = document.createElement('div');
+                var qleditor = document.createElement('div');
+                editor.setAttribute("id","editor");
+                editor.setAttribute("class","ql-container ql-snow");
+                qleditor.setAttribute("class","ql-editor ql-blank");
+                qleditor.innerHTML = this.originHTMLFormat();
+                editor.appendChild(qleditor);
+                output = editor.outerHTML;
+                */
+                var editor = document.createElement('div');
+                editor.setAttribute("id","editor");
+                editor.setAttribute("class","ql-container ql-snow");
+                editor.innerHTML = this.originHTMLFormat();
+                output = editor.outerHTML;
+              }else{
+                var editor = document.createElement('div');
+                editor.setAttribute("id","editor");
+                editor.setAttribute("class","ql-container ql-snow");
+                editor.innerHTML = this.originHTMLFormat();
+                output = editor.outerHTML;
+                var fragment = document.createDocumentFragment();
+                var tempElement = document.createElement('div');
+                tempElement.innerHTML = output;
+                while (tempElement.firstChild) {
+                    fragment.appendChild(tempElement.firstChild);
+                }
+                output = fragment.querySelector("#editor .ql-editor").innerHTML;
+              }
+              output = output.replace(/(<col\s+\w+\W+\d+\")/g,"$1 /");
+              output = output.replace(/(<img\s+src=\"[^\"]+\")/g,"$1 /");
+              output = output.replaceAll(/<br>/ig,'<br/>').replaceAll('&nbsp;','&#160;');
+              output = output.replace(/(<input\s+[^>]+\")/g,"$1 /");
+              console.log(output);
+              navigator.clipboard && navigator.clipboard.writeText(output).then(function() {
                 /* clipboard successfully set */
                 alert('成功复制');
               }, function() {
@@ -255,7 +335,23 @@ class RootElement extends React.Component{
                 alert('无法复制');
               });
             }}>复制</button>
+            </div>
             <div>{this.state.html}</div>
+            <div style={{width:'100%'}}>
+              <textarea ref={this.textarea} style={{width:'-webkit-fill-available',height:'800px',outline:'none',padding:'10px'}} placeholder="把原代码内容粘贴到这里渲染到上面"></textarea>
+              {/* 
+              <button style={btnStyle} onClick={()=>{ 
+                var fragment = document.createDocumentFragment();
+                var tempElement = document.createElement('div');
+                tempElement.innerHTML = this.textarea.current.value;
+                while (tempElement.firstChild) {
+                    fragment.appendChild(tempElement.firstChild);
+                }
+                //this.editor.current.innerHTML = fragment.querySelector("#editor ").innerHTML;
+                this.editor.current.querySelector(".ql-editor").innerHTML =  fragment.querySelector("#editor .ql-editor").innerHTML;
+              }}>渲染</button>
+              */}
+            </div>
             
         </>
     }
